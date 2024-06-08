@@ -1,0 +1,58 @@
+;
+; Copyright (c) 2020 Raspberry Pi (Trading) Ltd.
+;
+; SPDX-License-Identifier: BSD-3-Clause
+;
+
+.program spi_tx
+.side_set 1                                     // clk
+load_txdata:
+	pull block side 0b0	                        // TX FIFOが埋まるまで待ち
+    out null, 24 side 0b00
+bit_out:
+	out pins, 1 side 0b0	                    // OSRのデータを1ビットシフトして出力
+	jmp !osre bit_out side 0b1                  // OUT用のシフトレジスタが空でなければラベルにジャンプ
+
+
+.program spi_tx_16bit
+.side_set 1                                     // clk
+load_txdata:
+	pull block side 0b0	                        // TX FIFOが埋まるまで待ち
+    out null, 16 side 0b00
+bit_out:
+	out pins, 1 side 0b0	                    // OSRのデータを1ビットシフトして出力
+	jmp !osre bit_out side 0b1                  // OUT用のシフトレジスタが空でなければラベルにジャンプ
+
+
+% c-sdk {
+static inline void spi_tx_init(PIO pio, uint sm, uint offset, uint mosi_pin, uint clk_pin, float clkdiv) {
+    // ステートマシンの設定
+    pio_sm_config c = spi_tx_program_get_default_config(offset);
+
+    // MOSI設定
+    pio_gpio_init(pio, mosi_pin);                                       // ピンの機能をPIOに設定
+    pio_sm_set_consecutive_pindirs(pio, sm, mosi_pin, 1, true);         // ピンを出力に設定
+
+    // SLK設定（side）
+    pio_gpio_init(pio, clk_pin);                                        // ピンの機能をPIOに設定
+    pio_sm_set_consecutive_pindirs(pio, sm, clk_pin, 1, true);          // ピンを出力に設定
+    sm_config_set_sideset_pins(&c, clk_pin);
+
+    // out命令とset命令の出力設定
+    sm_config_set_out_pins(&c, mosi_pin, 1);
+    sm_config_set_set_pins(&c, mosi_pin, 1);
+
+    // OSRの閾値を設定
+    sm_config_set_out_shift(&c, false, false, 32);                     // 左シフト、Auto Pullはfalse
+
+    // TXにFIFOを結合
+    sm_config_set_fifo_join(&c, PIO_FIFO_JOIN_TX);
+
+    // ボーレート設定（分周）
+    sm_config_set_clkdiv(&c, clkdiv);
+
+    // ステートマシンの設定反映と起動
+    pio_sm_init(pio, sm, offset, &c);
+    pio_sm_set_enabled(pio, sm, true);
+}
+%}
