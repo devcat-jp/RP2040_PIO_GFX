@@ -350,4 +350,32 @@ namespace RP2040_PIO_GFX {
         }
     }
 
+
+    /******************************************************************************
+    * @fn      drawLine
+    * @brief   直線描画
+    * @param   p1_x : 始点 x
+    * @param   p1_y : 始点 y
+    * @param   p2_x : 終点 x
+    * @param   p2_x : 終点y
+    ******************************************************************************/
+    void Gfx::drawLine(uint16_t p1_x, uint16_t p1_y, uint16_t p2_x, uint16_t p2_y, uint16_t color, uint16_t *p_buffer){
+        uint16_t dx = p2_x - p1_x;
+        uint16_t dy = p2_y - p1_y;
+        uint16_t e = 0;
+        uint16_t row = p1_y;
+        // ブレゼンハムアルゴリズム
+        for (int col = p1_x; col <= p2_x; col++) {
+            p_buffer[col + (row * this->width)] = color;
+            e = e + 2 * dy;
+            if (e >= dx) {
+                row++;
+                e = e - 2 * dx;
+            }
+        }
+        
+    }
+
+
+
 }

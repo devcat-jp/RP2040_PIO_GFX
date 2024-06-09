@@ -124,6 +124,17 @@ namespace RP2040_PIO_GFX {
         void writeFont8(uint16_t c_cur, uint16_t r_cur, const char *str, uint16_t *p_buffer);
 
 
+        /******************************************************************************
+        * @fn      drawLine
+        * @brief   直線描画
+        * @param   p1_x : 始点 x
+        * @param   p1_y : 始点 y
+        * @param   p2_x : 終点 x
+        * @param   p2_x : 終点y
+        ******************************************************************************/
+        void drawLine(uint16_t p1_x, uint16_t p1_y, uint16_t p2_x, uint16_t p2_y, uint16_t color, uint16_t *p_buffer);
+
+
 
         
     };
