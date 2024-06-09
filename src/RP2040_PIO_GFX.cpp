@@ -18,6 +18,10 @@ namespace RP2040_PIO_GFX {
         this->isInit = false;
         this->width = 0;
         this->height = 0;
+
+        this->is_transparent_font = false;
+        this->font_color = 0xFFFF;
+        this->font_back_color = 0x0000;
     }
 
 
@@ -293,6 +297,23 @@ namespace RP2040_PIO_GFX {
     }
 
 
+    /******************************************************************************
+    * @fn      setFontColor
+    * @brief   文字の色設定
+    * @param   font_color : 文字の色
+    * @param   font_back_color : 文字の背景色
+    ******************************************************************************/
+    void Gfx::setFontColor(uint16_t font_color){
+        this->font_color = font_color;
+        this->is_transparent_font = true;
+    }
+    void Gfx::setFontColor(uint16_t font_color, uint16_t font_back_color){
+        this->font_color = font_color;
+        this->font_back_color = font_back_color;
+        this->is_transparent_font = false;
+    }
+
+
 
      /******************************************************************************
     * @fn      writeFont8
@@ -314,9 +335,10 @@ namespace RP2040_PIO_GFX {
             // 文字データを書き込む
             for(int row = 0; row < _font_size; row++){
                 for(int col = 0; col < _font_size; col++){
-                    if( (pgm_read_byte(&(FontData8[_pos + row])) >> (_font_size - col - 1)) & 0b1 == 0b1) {
-                        p_buffer[_loop*_font_size + (c_cur*_font_size) + (r_cur*_font_size*this->width) + (col+(row*this->width)) + _newline] = 0xFFFF;
-                    }
+                    if( (pgm_read_byte(&(FontData8[_pos + row])) >> (_font_size - col - 1)) & 0b1 == 0b1)
+                        p_buffer[_loop*_font_size + (c_cur*_font_size) + (r_cur*_font_size*this->width) + (col+(row*this->width)) + _newline] = this->font_color;
+                    else if(!this->is_transparent_font)
+                        p_buffer[_loop*_font_size + (c_cur*_font_size) + (r_cur*_font_size*this->width) + (col+(row*this->width)) + _newline] = this->font_back_color;
                     // 改行判断
                     if(((_loop*_font_size) + (c_cur*_font_size) - _newline) >= this->width){
                         c_cur = 0;                                                      // 端に移動

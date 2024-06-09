@@ -18,6 +18,10 @@ namespace RP2040_PIO_GFX {
         uint32_t start_time;        // 初期化時の時刻
         uint32_t end_time;          // 初期化時の時刻
 
+        bool is_transparent_font;   
+        uint16_t font_color;        // 文字描画の配色
+        uint16_t font_back_color;   // 文字描画の背景色
+
         /******************************************************************************
         * @fn      digitalWrite_with_sleep
         * @brief   信号切り替え時の前後で指定時間待機する
@@ -99,7 +103,17 @@ namespace RP2040_PIO_GFX {
         void updata(uint16_t *p_buffer);
 
 
-         /******************************************************************************
+        /******************************************************************************
+        * @fn      setFontColor
+        * @brief   文字の色設定
+        * @param   font_color : 文字の色
+        * @param   font_back_color : 文字の背景色
+        ******************************************************************************/
+        void setFontColor(uint16_t font_color);
+        void setFontColor(uint16_t font_color, uint16_t font_back_color);
+
+
+        /******************************************************************************
         * @fn      writeFont8
         * @brief   8x8の文字をメモリに書き込む
         * @param   c_cur : 表示開始位置（col）
