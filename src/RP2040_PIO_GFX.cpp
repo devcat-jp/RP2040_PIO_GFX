@@ -1,5 +1,6 @@
 
 #include <RP2040_PIO_GFX.h>
+#include <FontData8x8.h>
 #include "Arduino.h"
 #include "pio.h"
 
@@ -289,6 +290,42 @@ namespace RP2040_PIO_GFX {
         delay(ms);
         digitalWrite(pin, mode);
         delay(ms);
+    }
+
+
+
+     /******************************************************************************
+    * @fn      writeFont8
+    * @brief   8x8の文字をメモリに書き込む
+    * @param   c_cur : 表示開始位置（col）
+    * @param   r_cur : 示開始位置（row）
+    * @param   *str : 表示文字列
+    * @param   *p_buffer : 書き込み先のメモリ
+    ******************************************************************************/
+    void Gfx::writeFont8(uint16_t c_cur, uint16_t r_cur, char *str, uint16_t *p_buffer){
+        uint8_t _font_size = 8;
+        uint16_t _pos = 0;
+        uint16_t _loop = 0;
+        uint16_t _newline = 0;
+
+        // 入力文字分繰り返す
+        while(str[_loop] != '\0'){
+            _pos = (str[_loop] - 0x21) * _font_size;       // !(0x21) から配列用意
+            // 文字データを書き込む
+            for(int row = 0; row < _font_size; row++){
+                for(int col = 0; col < _font_size; col++){
+                    if( (pgm_read_byte(&(FontData8[_pos + row])) >> (_font_size - col - 1)) & 0b1 == 0b1) {
+                        p_buffer[_loop*_font_size + (c_cur*_font_size) + (r_cur*_font_size*this->width) + (col+(row*this->width)) + _newline] = 0xFFFF;
+                    }
+                    // 改行判断
+                    if(((_loop*_font_size) + (c_cur*_font_size) - _newline) >= this->width){
+                        c_cur = 0;                                                      // 端に移動
+                        _newline += (_font_size*this->width) - _loop*_font_size;        // 1行分補正
+                    }
+                }
+            }
+            _loop++;
+        }
     }
 
 }

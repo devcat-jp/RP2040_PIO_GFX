@@ -96,11 +96,19 @@ namespace RP2040_PIO_GFX {
         ******************************************************************************/
         bool is_completed_transfer();
     
-    
-
-
-
         void updata(uint16_t *p_buffer);
+
+
+         /******************************************************************************
+        * @fn      writeFont8
+        * @brief   8x8の文字をメモリに書き込む
+        * @param   c_cur : 表示開始位置（col）
+        * @param   r_cur : 示開始位置（row）
+        * @param   *str : 表示文字列
+        * @param   *p_buffer : 書き込み先のメモリ
+        ******************************************************************************/
+        void writeFont8(uint16_t c_cur, uint16_t r_cur, char *str, uint16_t *p_buffer);
+
 
 
         
