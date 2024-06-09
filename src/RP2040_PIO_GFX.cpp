@@ -363,15 +363,29 @@ namespace RP2040_PIO_GFX {
         uint16_t dx = p2_x - p1_x;
         uint16_t dy = p2_y - p1_y;
         uint16_t e = 0;
-        uint16_t row = p1_y;
-        // ブレゼンハムアルゴリズム
-        for (int col = p1_x; col <= p2_x; col++) {
-            p_buffer[col + (row * this->width)] = color;
-            e = e + 2 * dy;
-            if (e >= dx) {
-                row++;
-                e = e - 2 * dx;
+        
+        
+        if(dx > dy) {
+            uint16_t row = p1_y;
+            for (int col = p1_x; col <= p2_x; col++) {
+                p_buffer[col + (row * this->width)] = color;
+                e = e + 2 * dy;
+                if (e >= dx) {
+                    row++;
+                    e = e - 2 * dx;
+                }
             }
+        } else {
+            uint16_t col = p1_x;
+            for (int row = p1_y; row <= p2_y; row++) {
+                p_buffer[col + (row * this->width)] = color;
+                e = e + 2 * dx;
+                if (e >= dy) {
+                    col++;
+                    e = e - 2 * dy;
+                }
+            }
+
         }
         
     }
