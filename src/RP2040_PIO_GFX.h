@@ -121,7 +121,7 @@ namespace RP2040_PIO_GFX {
         * @param   *str : 表示文字列
         * @param   *p_buffer : 書き込み先のメモリ
         ******************************************************************************/
-        void writeFont8(uint16_t c_cur, uint16_t r_cur, char *str, uint16_t *p_buffer);
+        void writeFont8(uint16_t c_cur, uint16_t r_cur, const char *str, uint16_t *p_buffer);
 
 
 
