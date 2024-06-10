@@ -269,6 +269,13 @@ namespace RP2040_PIO_GFX {
     }
 
 
+    void Gfx::clear(uint16_t color, uint16_t *p_buffer){
+        for(int i = 0; i < this->width*this->height; i++){
+            p_buffer[i] = color;
+        }
+    }
+
+
 
 
     /******************************************************************************
@@ -360,34 +367,29 @@ namespace RP2040_PIO_GFX {
     * @param   p2_x : 終点y
     ******************************************************************************/
     void Gfx::drawLine(uint16_t p1_x, uint16_t p1_y, uint16_t p2_x, uint16_t p2_y, uint16_t color, uint16_t *p_buffer){
-        uint16_t dx = p2_x - p1_x;
-        uint16_t dy = p2_y - p1_y;
-        uint16_t e = 0;
-        
-        
-        if(dx > dy) {
-            uint16_t row = p1_y;
-            for (int col = p1_x; col <= p2_x; col++) {
-                p_buffer[col + (row * this->width)] = color;
-                e = e + 2 * dy;
-                if (e >= dx) {
-                    row++;
-                    e = e - 2 * dx;
-                }
-            }
-        } else {
-            uint16_t col = p1_x;
-            for (int row = p1_y; row <= p2_y; row++) {
-                p_buffer[col + (row * this->width)] = color;
-                e = e + 2 * dx;
-                if (e >= dy) {
-                    col++;
-                    e = e - 2 * dy;
-                }
+        uint16_t dx = abs(p2_x - p1_x);
+        uint16_t dy = abs(p2_y - p1_y);
+        uint16_t sx = (p1_x < p2_x) ? 1 : -1;
+        uint16_t sy = (p1_y < p2_y) ? 1 : -1;
+        int err = dx - dy;
+
+        while (1){
+            p_buffer[p1_x + (p1_y * this->width)] = color;
+
+            if (p1_x == p2_x && p2_y == p1_y) {
+                break;
             }
 
+            int16_t e2 = 2 * err;
+            if (e2 > -dy) {
+                err -= dy;
+                p1_x += sx;
+            }
+            if (e2 < dx) {
+                err += dx;
+                p1_y += sy;
+            }
         }
-        
     }
 
 

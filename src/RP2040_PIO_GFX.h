@@ -49,6 +49,7 @@ namespace RP2040_PIO_GFX {
             BLUE = 0x001F,
             GREEN = 0x07E0,
             WHITE = 0xFFFF,
+            BLACK = 0x0000,
         };
 
         /******************************************************************************
@@ -113,6 +114,8 @@ namespace RP2040_PIO_GFX {
         bool is_completed_transfer();
     
         void updata(uint16_t *p_buffer);
+
+        void clear(uint16_t color, uint16_t *p_buffer);
 
 
         /******************************************************************************
