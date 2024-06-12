@@ -167,6 +167,10 @@ namespace RP2040_PIO_GFX {
         // 画面サイズ記録
         this->width = col_size;
         this->height = row_size;
+        this->screen_size = col_size * row_size;
+
+        // メモリ確保
+        this->p_buffer = new uint16_t[this->width*this->height];
 
         // 初期化フラグを有効化
         this->isInit = true;
@@ -178,7 +182,7 @@ namespace RP2040_PIO_GFX {
     * @brief   DMA転送設定を行う
     * @param   p_buffer : 転送メモリの初期設定
     ******************************************************************************/
-    bool Gfx::initDMA(uint16_t* p_buffer){
+    bool Gfx::initDMA(){
         if(!this->isInit) return false;
 
         // DMA設定
@@ -191,7 +195,7 @@ namespace RP2040_PIO_GFX {
             dma_chan,
             &c,
             &pio0_hw->txf[PIO_TX_SM],                                       // PIOのTX FIFO
-            p_buffer,                                                       // 
+            this->p_buffer,                                                 // 
             this->width*this->height,                                       // 繰り返し回数
             true                                                            // 開始フラグ
         );
@@ -207,7 +211,7 @@ namespace RP2040_PIO_GFX {
     * @param   p_buffer : 転送メモリの初期設定
     * @param   *p_func : 転送完了時に呼ばれるコールバック関数
     ******************************************************************************/
-    bool Gfx::initDMA(uint16_t *p_buffer, void (*p_func)()){
+    bool Gfx::initDMA(void (*p_func)()){
         if(!this->isInit) return false;
 
         // DMA設定
@@ -220,7 +224,7 @@ namespace RP2040_PIO_GFX {
             dma_chan,
             &c,
             &pio0_hw->txf[PIO_TX_SM],                               // PIOのTX FIFO
-            p_buffer,                                               // 
+            this->p_buffer,                                         // 
             this->width*this->height,                               // 繰り返し回数
             true                                                    // 開始フラグ
         );
@@ -263,16 +267,14 @@ namespace RP2040_PIO_GFX {
     }
 
 
-    void Gfx::updata(uint16_t* p_buffer){
+    void Gfx::updata(){
         dma_hw->ints0 = 1u << dma_chan;                         // 割り込み要求をクリア
-        dma_channel_set_read_addr(dma_chan, p_buffer, true);
+        dma_channel_set_read_addr(dma_chan, this->p_buffer, true);
     }
 
 
-    void Gfx::clear(uint16_t color, uint16_t *p_buffer){
-        for(int i = 0; i < this->width*this->height; i++){
-            p_buffer[i] = color;
-        }
+    void Gfx::clear(uint16_t color){
+        for(int i = 0; i < this->screen_size; i++) this->p_buffer[i] = color;
     }
 
 
@@ -330,7 +332,7 @@ namespace RP2040_PIO_GFX {
     * @param   *str : 表示文字列
     * @param   *p_buffer : 書き込み先のメモリ
     ******************************************************************************/
-    void Gfx::writeFont8(uint16_t c_cur, uint16_t r_cur, const char *str, uint16_t *p_buffer){
+    void Gfx::writeFont8(uint16_t c_cur, uint16_t r_cur, const char *str){
         uint8_t _font_size = 8;
         uint16_t _pos = 0;
         uint16_t _loop = 0;
@@ -343,9 +345,9 @@ namespace RP2040_PIO_GFX {
             for(int row = 0; row < _font_size; row++){
                 for(int col = 0; col < _font_size; col++){
                     if( (pgm_read_byte(&(FontData8[_pos + row])) >> (_font_size - col - 1)) & 0b1 == 0b1)
-                        p_buffer[_loop*_font_size + (c_cur*_font_size) + (r_cur*_font_size*this->width) + (col+(row*this->width)) + _newline] = this->font_color;
+                        this->p_buffer[_loop*_font_size + (c_cur*_font_size) + (r_cur*_font_size*this->width) + (col+(row*this->width)) + _newline] = this->font_color;
                     else if(!this->is_transparent_font)
-                        p_buffer[_loop*_font_size + (c_cur*_font_size) + (r_cur*_font_size*this->width) + (col+(row*this->width)) + _newline] = this->font_back_color;
+                        this->p_buffer[_loop*_font_size + (c_cur*_font_size) + (r_cur*_font_size*this->width) + (col+(row*this->width)) + _newline] = this->font_back_color;
                     // 改行判断
                     if(((_loop*_font_size) + (c_cur*_font_size) - _newline) >= this->width){
                         c_cur = 0;                                                      // 端に移動
@@ -366,7 +368,7 @@ namespace RP2040_PIO_GFX {
     * @param   p2_x : 終点 x
     * @param   p2_x : 終点y
     ******************************************************************************/
-    void Gfx::drawLine(uint16_t p1_x, uint16_t p1_y, uint16_t p2_x, uint16_t p2_y, uint16_t color, uint16_t *p_buffer){
+    void Gfx::drawLine(uint16_t p1_x, uint16_t p1_y, uint16_t p2_x, uint16_t p2_y, uint16_t color){
         uint16_t dx = abs(p2_x - p1_x);
         uint16_t dy = abs(p2_y - p1_y);
         uint16_t sx = (p1_x < p2_x) ? 1 : -1;
@@ -374,7 +376,7 @@ namespace RP2040_PIO_GFX {
         int err = dx - dy;
 
         while (1){
-            p_buffer[p1_x + (p1_y * this->width)] = color;
+            this->p_buffer[p1_x + (p1_y * this->width)] = color;
 
             if (p1_x == p2_x && p2_y == p1_y) {
                 break;
@@ -388,6 +390,19 @@ namespace RP2040_PIO_GFX {
             if (e2 < dx) {
                 err += dx;
                 p1_y += sy;
+            }
+        }
+    }
+
+
+    void Gfx::drawCircle(uint16_t *p_buffer, uint16_t centerX, uint16_t centerY, uint16_t radius, uint16_t color) {
+        for (int y = 0; y < this->height; ++y) {
+            for (int x = 0; x < this->width; ++x) {
+                int dx = x - centerX;
+                int dy = y - centerY;
+                if (std::sqrt(dx * dx + dy * dy) <= radius) {
+                    p_buffer[x + (y * this->width)] = color;
+                }
             }
         }
     }

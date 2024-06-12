@@ -14,6 +14,7 @@ namespace RP2040_PIO_GFX {
         int dma_chan;               // 取得したDMAチャンネル
         uint16_t width;             // 指定された画面幅
         uint16_t height;            // 指定された画面高さ
+        uint32_t screen_size;       //
         uint32_t frame_time;        // 目標とする処理時間
         uint32_t start_time;        // 初期化時の時刻
         uint32_t end_time;          // 初期化時の時刻
@@ -21,6 +22,8 @@ namespace RP2040_PIO_GFX {
         bool is_transparent_font;   
         uint16_t font_color;        // 文字描画の配色
         uint16_t font_back_color;   // 文字描画の背景色
+
+        uint16_t *p_buffer;         //
 
         /******************************************************************************
         * @fn      digitalWrite_with_sleep
@@ -79,18 +82,16 @@ namespace RP2040_PIO_GFX {
         /******************************************************************************
         * @fn      initDMA
         * @brief   DMA転送設定を行う
-        * @param   p_buffer : 転送メモリの初期設定
         ******************************************************************************/
-        bool initDMA(uint16_t *p_buffer);
+        bool initDMA();
 
 
         /******************************************************************************
         * @fn      initDMA
         * @brief   DMA転送設定を行う
         * @param   p_buffer : 転送メモリの初期設定
-        * @param   *p_func : 転送完了時に呼ばれるコールバック関数
         ******************************************************************************/
-        bool initDMA(uint16_t *p_buffer, void (*p_func)());
+        bool initDMA(void (*p_func)());
 
 
         /******************************************************************************
@@ -113,9 +114,9 @@ namespace RP2040_PIO_GFX {
         ******************************************************************************/
         bool is_completed_transfer();
     
-        void updata(uint16_t *p_buffer);
+        void updata();
 
-        void clear(uint16_t color, uint16_t *p_buffer);
+        void clear(uint16_t color);
 
 
         /******************************************************************************
@@ -134,9 +135,8 @@ namespace RP2040_PIO_GFX {
         * @param   c_cur : 表示開始位置（col）
         * @param   r_cur : 示開始位置（row）
         * @param   *str : 表示文字列
-        * @param   *p_buffer : 書き込み先のメモリ
         ******************************************************************************/
-        void writeFont8(uint16_t c_cur, uint16_t r_cur, const char *str, uint16_t *p_buffer);
+        void writeFont8(uint16_t c_cur, uint16_t r_cur, const char *str);
 
 
         /******************************************************************************
@@ -147,7 +147,17 @@ namespace RP2040_PIO_GFX {
         * @param   p2_x : 終点 x
         * @param   p2_x : 終点y
         ******************************************************************************/
-        void drawLine(uint16_t p1_x, uint16_t p1_y, uint16_t p2_x, uint16_t p2_y, uint16_t color, uint16_t *p_buffer);
+        void drawLine(uint16_t p1_x, uint16_t p1_y, uint16_t p2_x, uint16_t p2_y, uint16_t color);
+
+
+        void drawCircle(uint16_t *p_buffer, uint16_t centerX, uint16_t centerY, uint16_t radius, uint16_t color);
+
+
+        /******************************************************************************
+        * @fn      getImageBuffer
+        * @brief   クラス内で確保している配列のアドレスを返す
+        ******************************************************************************/
+        uint16_t *getImageBuffer(){return this->p_buffer;}
 
 
 
