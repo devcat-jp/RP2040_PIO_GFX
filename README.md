@@ -1,7 +1,7 @@
 # RP2040_PIO_GFX
 ### 概要
 趣味と勉強のために作成しているArduino用グラフィックライブラリです  <br/>
-Raspberry Pi Pico(rp2040)に搭載されているProgrammable I/OとDMAを利用しCPUを利用しないのが特徴です  <br/>
+Raspberry Pi Pico(rp2040)に搭載されているProgrammable I/OとDMAを利用するためCPUを占有しないのが特徴です  <br/>
 実用性はあまりないですが、どなたかの参考になれば幸いです  <br/>
 <br/>
 
