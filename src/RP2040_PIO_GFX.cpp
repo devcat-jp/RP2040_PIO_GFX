@@ -28,13 +28,14 @@ namespace RP2040_PIO_GFX {
     /******************************************************************************
     * @fn      initILI9341
     * @brief   ILI9341の初期化処理
-    * @param   pin_clk : クロックピン番号
-    * @param   pin_mosi   : MOSIピン番号
-    * @param   pin_dc   : DCピン番号
-    * @param   pin_rst   : リセットピン番号
-    * @param   pin_cs   : CSピン番号
-    * @param   col_size   : COLサイズ
-    * @param   row_size   : ROWサイズ
+    * @param   TFT_CLK : クロックピン番号
+    * @param   pin_mosi : MOSIピン番号
+    * @param   pin_dc : DCピン番号
+    * @param   pin_rst : リセットピン番号
+    * @param   pin_cs : CSピン番号
+    * @param   col_size : COLサイズ
+    * @param   row_size : ROWサイズ
+    * @param   rot_mode : 画面の向き
     ******************************************************************************/
     void Gfx::initILI9341(uint8_t pin_clk,
                         uint8_t pin_mosi,
@@ -170,17 +171,31 @@ namespace RP2040_PIO_GFX {
         this->screen_size = col_size * row_size;
 
         // メモリ確保
-        this->p_buffer = new uint16_t[this->width*this->height];
+        this->top_buffer = new uint16_t[this->width*this->height];
+        this->write_buffer = this->top_buffer;
 
         // 初期化フラグを有効化
         this->isInit = true;
     }
 
 
+    /******************************************************************************
+    * @fn      initDoubleBuffer
+    * @brief   ダブルバッファを生成する
+    ******************************************************************************/
+    bool Gfx::initDoubleBuffer(){
+        if(!this->isInit) return false;
+        // メモリ確保
+        this->back_buffer = new uint16_t[this->width*this->height];
+        this->write_buffer = this->back_buffer;
+        return true;
+    }
+
+
      /******************************************************************************
     * @fn      initDMA
     * @brief   DMA転送設定を行う
-    * @param   p_buffer : 転送メモリの初期設定
+    * @param   top_buffer : 転送メモリの初期設定
     ******************************************************************************/
     bool Gfx::initDMA(){
         if(!this->isInit) return false;
@@ -195,7 +210,7 @@ namespace RP2040_PIO_GFX {
             dma_chan,
             &c,
             &pio0_hw->txf[PIO_TX_SM],                                       // PIOのTX FIFO
-            this->p_buffer,                                                 // 
+            this->top_buffer,                                                 // 
             this->width*this->height,                                       // 繰り返し回数
             true                                                            // 開始フラグ
         );
@@ -208,7 +223,7 @@ namespace RP2040_PIO_GFX {
     /******************************************************************************
     * @fn      initDMA
     * @brief   DMA転送設定を行う
-    * @param   p_buffer : 転送メモリの初期設定
+    * @param   top_buffer : 転送メモリの初期設定
     * @param   *p_func : 転送完了時に呼ばれるコールバック関数
     ******************************************************************************/
     bool Gfx::initDMA(void (*p_func)()){
@@ -224,7 +239,7 @@ namespace RP2040_PIO_GFX {
             dma_chan,
             &c,
             &pio0_hw->txf[PIO_TX_SM],                               // PIOのTX FIFO
-            this->p_buffer,                                         // 
+            this->top_buffer,                                         // 
             this->width*this->height,                               // 繰り返し回数
             true                                                    // 開始フラグ
         );
@@ -267,17 +282,35 @@ namespace RP2040_PIO_GFX {
     }
 
 
+    /******************************************************************************
+    * @fn      updata
+    * @brief   DMA転送を指示する
+    ******************************************************************************/
     void Gfx::updata(){
         dma_hw->ints0 = 1u << dma_chan;                         // 割り込み要求をクリア
-        dma_channel_set_read_addr(dma_chan, this->p_buffer, true);
+        dma_channel_set_read_addr(dma_chan, this->top_buffer, true);
+    }
+
+    /******************************************************************************
+    * @fn      swap
+    * @brief   ライブラリ内部で確保しているバッファを入れ替える
+    ******************************************************************************/
+    void Gfx::swap() {
+        // 描画メモリ交換
+        this->back_buffer = this->top_buffer;
+        this->top_buffer = this->write_buffer;
+        this->write_buffer = this->back_buffer;
+        this->updata();
     }
 
 
+    /******************************************************************************
+    * @fn      clear
+    * @brief   現在操作中のバッファをクリアする
+    ******************************************************************************/
     void Gfx::clear(uint16_t color){
-        for(int i = 0; i < this->screen_size; i++) this->p_buffer[i] = color;
+        for(int i = 0; i < this->screen_size; i++) this->write_buffer[i] = color;
     }
-
-
 
 
     /******************************************************************************
@@ -288,8 +321,6 @@ namespace RP2040_PIO_GFX {
         if(dma_hw->ints0 == 1) return true;
         else return false;
     }
-
-
 
 
     /******************************************************************************
@@ -304,7 +335,6 @@ namespace RP2040_PIO_GFX {
         digitalWrite(pin, mode);
         delay(ms);
     }
-
 
     /******************************************************************************
     * @fn      setFontColor
@@ -323,14 +353,13 @@ namespace RP2040_PIO_GFX {
     }
 
 
-
      /******************************************************************************
     * @fn      writeFont8
     * @brief   8x8の文字をメモリに書き込む
     * @param   c_cur : 表示開始位置（col）
     * @param   r_cur : 示開始位置（row）
     * @param   *str : 表示文字列
-    * @param   *p_buffer : 書き込み先のメモリ
+    * @param   *write_buffer : 書き込み先のメモリ
     ******************************************************************************/
     void Gfx::writeFont8(uint16_t c_cur, uint16_t r_cur, const char *str){
         uint8_t _font_size = 8;
@@ -340,14 +369,14 @@ namespace RP2040_PIO_GFX {
 
         // 入力文字分繰り返す
         while(str[_loop] != '\0'){
-            _pos = (str[_loop] - 0x21) * _font_size;       // !(0x21) から配列用意
+            _pos = (str[_loop] - 0x20) * _font_size;       // スペース(0x20) から配列用意
             // 文字データを書き込む
             for(int row = 0; row < _font_size; row++){
                 for(int col = 0; col < _font_size; col++){
                     if( (pgm_read_byte(&(FontData8[_pos + row])) >> (_font_size - col - 1)) & 0b1 == 0b1)
-                        this->p_buffer[_loop*_font_size + (c_cur*_font_size) + (r_cur*_font_size*this->width) + (col+(row*this->width)) + _newline] = this->font_color;
+                        this->write_buffer[_loop*_font_size + (c_cur*_font_size) + (r_cur*_font_size*this->width) + (col+(row*this->width)) + _newline] = this->font_color;
                     else if(!this->is_transparent_font)
-                        this->p_buffer[_loop*_font_size + (c_cur*_font_size) + (r_cur*_font_size*this->width) + (col+(row*this->width)) + _newline] = this->font_back_color;
+                        this->write_buffer[_loop*_font_size + (c_cur*_font_size) + (r_cur*_font_size*this->width) + (col+(row*this->width)) + _newline] = this->font_back_color;
                     // 改行判断
                     if(((_loop*_font_size) + (c_cur*_font_size) - _newline) >= this->width){
                         c_cur = 0;                                                      // 端に移動
@@ -358,7 +387,6 @@ namespace RP2040_PIO_GFX {
             _loop++;
         }
     }
-
 
     /******************************************************************************
     * @fn      drawLine
@@ -376,7 +404,7 @@ namespace RP2040_PIO_GFX {
         int err = dx - dy;
 
         while (1){
-            this->p_buffer[p1_x + (p1_y * this->width)] = color;
+            this->write_buffer[p1_x + (p1_y * this->width)] = color;
 
             if (p1_x == p2_x && p2_y == p1_y) {
                 break;
@@ -412,18 +440,18 @@ namespace RP2040_PIO_GFX {
                 int ly = (y - cy) * (y - cy);
                 int lr = radius * radius;
                 if (lx + ly < lr){
-                    this->p_buffer[x + (y * this->width)] = color;
+                    this->write_buffer[x + (y * this->width)] = color;
                 }
             }
         }
         // 外周を少し膨らませる
         for(int x = cx - (radius/10); x < cx + (radius/10); x++) {
-            this->p_buffer[x + ((cy + radius) * this->width)] = color;
-            this->p_buffer[x + ((cy - radius) * this->width)] = color;
+            this->write_buffer[x + ((cy + radius) * this->width)] = color;
+            this->write_buffer[x + ((cy - radius) * this->width)] = color;
         }
         for(int y = cy - (radius/10); y < cy + (radius/10); y++) {
-            this->p_buffer[cx + radius + (y * this->width)] = color;
-            this->p_buffer[cx - radius + (y * this->width)] = color;
+            this->write_buffer[cx + radius + (y * this->width)] = color;
+            this->write_buffer[cx - radius + (y * this->width)] = color;
         }
     }
 
