@@ -78,13 +78,12 @@ void setup() {
 }
 
 
-uint16_t loop_cnt = 0;
 unsigned long ts = 0, te = 0;
 char _buf[12];
 
 void loop() {
   // DMA転送が完了したら処理実行
-  if(gfx.is_completed_transfer()){
+  if(gfx.isCompletedTransfer()){
     // 描画指示
     gfx.swap();
 
