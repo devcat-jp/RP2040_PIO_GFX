@@ -432,6 +432,10 @@ namespace RP2040_PIO_GFX {
     * @param   color : 色
     ******************************************************************************/
     void Gfx::drawCircle(uint16_t cx, uint16_t cy, uint16_t radius, uint16_t color) {
+        // 簡易確認
+        if(cx + (cy * this->width) - radius - (radius * this->width) < 0 ||
+           cx + (cy * this->width) + radius + (radius * this->width) > this->width + (this->height * this->width)) return;
+
         // 円の内側判定のものを埋める
         for (int y = cy - radius; y < cy + radius; y++){
             for (int x = cx - radius; x < cx + radius; x++){
