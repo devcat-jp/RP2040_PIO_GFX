@@ -33,8 +33,6 @@ Raspberry Pi Pico(rp2040)に搭載されているProgrammable I/OとDMAを利用
 - 70fpsぐらいで描画
 <br/>
 ![利用例](images/sample.png)
-<br/>
-
 
 ```
 #include <Arduino.h>
