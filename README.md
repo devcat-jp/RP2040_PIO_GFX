@@ -28,11 +28,11 @@ Raspberry Pi Pico(rp2040)に搭載されているProgrammable I/OとDMAを利用
 <br />
 
 ### 利用例
+![利用例](images/sample.png)
 - 240 x 240 の画面サイズで毎ループ全画面描画
 - R G B 各色の円をそれぞれ33個描画
 - 70fpsぐらいで描画
 <br/>
-![利用例](images/sample.png)
 
 ```
 #include <Arduino.h>
