@@ -103,10 +103,10 @@ namespace RP2040_PIO_GFX {
         bool initDMA(void (*p_func)());
 
         /******************************************************************************
-        * @fn      is_completed_transfer
+        * @fn      isCompletedTransfer
         * @brief   DMAによる画像メモリ転送が完了しているか確認する
         ******************************************************************************/
-        bool is_completed_transfer();
+        bool isCompletedTransfer();
     
         /******************************************************************************
         * @fn      updata

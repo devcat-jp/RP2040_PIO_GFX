@@ -314,10 +314,10 @@ namespace RP2040_PIO_GFX {
 
 
     /******************************************************************************
-    * @fn      is_completed_transfer
+    * @fn      isCompletedTransfer
     * @brief   DMAによる画像メモリ転送が完了しているか確認する
     ******************************************************************************/
-    bool Gfx::is_completed_transfer(){
+    bool Gfx::isCompletedTransfer(){
         if(dma_hw->ints0 == 1) return true;
         else return false;
     }
