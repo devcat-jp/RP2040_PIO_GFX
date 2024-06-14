@@ -114,8 +114,8 @@ namespace RP2040_PIO_GFX {
         ******************************************************************************/
         bool is_completed_transfer();
     
-        void updata();
 
+        void updata();
         void clear(uint16_t color);
 
 
@@ -146,11 +146,20 @@ namespace RP2040_PIO_GFX {
         * @param   p1_y : 始点 y
         * @param   p2_x : 終点 x
         * @param   p2_x : 終点y
+        * @param   color : 色
         ******************************************************************************/
         void drawLine(uint16_t p1_x, uint16_t p1_y, uint16_t p2_x, uint16_t p2_y, uint16_t color);
 
 
-        void drawCircle(uint16_t *p_buffer, uint16_t centerX, uint16_t centerY, uint16_t radius, uint16_t color);
+        /******************************************************************************
+        * @fn      drawdrawCircleLine
+        * @brief   円描画
+        * @param   cx : 始点 x
+        * @param   cy : 始点 y
+        * @param   radius : 終点 x
+        * @param   color : 色
+        ******************************************************************************/
+        void drawCircle(uint16_t cx, uint16_t cy, uint16_t radius, uint16_t color);
 
 
         /******************************************************************************

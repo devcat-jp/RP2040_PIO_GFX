@@ -395,15 +395,35 @@ namespace RP2040_PIO_GFX {
     }
 
 
-    void Gfx::drawCircle(uint16_t *p_buffer, uint16_t centerX, uint16_t centerY, uint16_t radius, uint16_t color) {
-        for (int y = 0; y < this->height; ++y) {
-            for (int x = 0; x < this->width; ++x) {
-                int dx = x - centerX;
-                int dy = y - centerY;
-                if (std::sqrt(dx * dx + dy * dy) <= radius) {
-                    p_buffer[x + (y * this->width)] = color;
+    /******************************************************************************
+    * @fn      drawdrawCircleLine
+    * @brief   円描画
+    * @param   cx : 始点 x
+    * @param   cy : 始点 y
+    * @param   radius : 終点 x
+    * @param   color : 色
+    ******************************************************************************/
+    void Gfx::drawCircle(uint16_t cx, uint16_t cy, uint16_t radius, uint16_t color) {
+        // 円の内側判定のものを埋める
+        for (int y = cy - radius; y < cy + radius; y++){
+            for (int x = cx - radius; x < cx + radius; x++){
+                // 判定用
+                int lx = (x - cx) * (x - cx);
+                int ly = (y - cy) * (y - cy);
+                int lr = radius * radius;
+                if (lx + ly < lr){
+                    this->p_buffer[x + (y * this->width)] = color;
                 }
             }
+        }
+        // 外周を少し膨らませる
+        for(int x = cx - (radius/10); x < cx + (radius/10); x++) {
+            this->p_buffer[x + ((cy + radius) * this->width)] = color;
+            this->p_buffer[x + ((cy - radius) * this->width)] = color;
+        }
+        for(int y = cy - (radius/10); y < cy + (radius/10); y++) {
+            this->p_buffer[cx + radius + (y * this->width)] = color;
+            this->p_buffer[cx - radius + (y * this->width)] = color;
         }
     }
 
