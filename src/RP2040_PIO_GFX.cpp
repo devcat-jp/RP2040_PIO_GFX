@@ -459,6 +459,18 @@ namespace RP2040_PIO_GFX {
         }
     }
 
+    /******************************************************************************
+    * @fn      drawPixel
+    * @brief   1点描画する
+    * @param   px : x
+    * @param   py : y
+    * @param   color : 色
+    ******************************************************************************/
+    void Gfx::drawPixel(uint16_t px, uint16_t py, uint16_t color){
+        if(px + (py * this->width) > this->width + (this->height * this->width)) return;
+        this->write_buffer[px + (py * this->width)] = color;
+    }
+
 
 
 }
