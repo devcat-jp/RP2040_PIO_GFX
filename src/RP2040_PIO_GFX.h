@@ -68,6 +68,7 @@ namespace RP2040_PIO_GFX {
         * @param   col_size : COLサイズ
         * @param   row_size : ROWサイズ
         * @param   rot_mode : 画面の向き
+        * @param   division : 分周数
         ******************************************************************************/
         void initILI9341(uint8_t pin_clk,
                         uint8_t pin_mosi,
@@ -78,7 +79,8 @@ namespace RP2040_PIO_GFX {
                         uint16_t start_row,
                         uint16_t col_size,
                         uint16_t row_size,
-                        uint8_t rot_mode
+                        uint8_t rot_mode,
+                        float division
                         );
 
 
